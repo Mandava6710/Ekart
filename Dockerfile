@@ -33,15 +33,12 @@ RUN if [ -f "target/Ekart-0.0.1-SNAPSHOT.jar" ]; then \
 # Expose port
 EXPOSE 8080
 
-# Copy entrypoint script
-COPY entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-
-# Set environment and run
+# Set environment
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
 
-# Use entrypoint script to properly handle PORT variable
-ENTRYPOINT ["/app/entrypoint.sh"]
+# Run directly - let Spring read PORT from environment variable
+# Spring Boot 3.5+ reads environment variables automatically
+CMD ["java", "-Xmx512m", "-Xms256m", "-Dspring.profiles.active=prod", "-jar", "target/Ekart-0.0.1-SNAPSHOT.jar"]
 
 
