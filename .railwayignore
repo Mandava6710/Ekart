@@ -1,0 +1,13 @@
+.git
+.gitignore
+.vscode
+.qodo
+target
+node_modules
+frontend/node_modules
+.env.local
+*.log
+*.DS_Store
+README.md
+DEPLOYMENT.md
+.github
