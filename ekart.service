@@ -1,0 +1,16 @@
+[Unit]
+Description=Ekart Cargo Management System
+After=network.target
+
+[Service]
+Type=simple
+User=ekart
+WorkingDirectory=/var/www/ekart
+ExecStart=/usr/bin/java -Dserver.port=8080 -jar /var/www/ekart/target/Ekart-0.0.1-SNAPSHOT.jar
+Restart=on-failure
+RestartSec=10
+Environment="SPRING_PROFILES_ACTIVE=production"
+Environment="JAVA_OPTS=-Xmx1g -Xms512m"
+
+[Install]
+WantedBy=multi-user.target
