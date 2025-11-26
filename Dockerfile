@@ -37,6 +37,6 @@ EXPOSE 8080
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
 
-CMD ["java", "-Xmx512m", "-Xms256m", "-Dserver.port=8080", "-Dspring.profiles.active=prod", "-jar", "target/Ekart-0.0.1-SNAPSHOT.jar"]
+CMD sh -c "java -Xmx512m -Xms256m -Dserver.port=${PORT} -Dspring.profiles.active=prod -jar target/Ekart-0.0.1-SNAPSHOT.jar"
 
 
