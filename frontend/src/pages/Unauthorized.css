@@ -1,0 +1,32 @@
+.unauthorized-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  background-color: #f5f5f5;
+}
+
+.unauthorized-box {
+  background: white;
+  padding: 40px;
+  border-radius: 8px;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  max-width: 500px;
+}
+
+.unauthorized-box h2 {
+  color: #dc3545;
+  margin-bottom: 15px;
+  font-size: 28px;
+}
+
+.unauthorized-box p {
+  color: #666;
+  margin-bottom: 30px;
+  font-size: 16px;
+}
+
+.unauthorized-box .btn {
+  margin-top: 20px;
+}

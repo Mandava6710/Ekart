@@ -1,6 +1,7 @@
 package com.alpha.Ekart.entity;
 
 import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
@@ -15,10 +16,13 @@ public class Loading {
 	private int lid;
 	private String ldate;
 	private String ltime;
-	@ManyToOne
+	@ManyToOne(fetch = FetchType.EAGER)
 	private Address address_id;
 	public int getLid() {
 		return lid;
+	}
+	public int getId() {
+		return lid;  // Alias for frontend compatibility
 	}
 	public void setLid(int lid) {
 		this.lid = lid;

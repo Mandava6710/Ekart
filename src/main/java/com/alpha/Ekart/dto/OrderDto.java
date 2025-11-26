@@ -4,7 +4,6 @@ import com.alpha.Ekart.entity.Loading;
 import com.alpha.Ekart.entity.UnLoading;
 
 public class OrderDto {
-	
 	private int cargoid;
 	private String cargoname;
 	private String cargodescription;
@@ -12,6 +11,14 @@ public class OrderDto {
 	private int cargocount;
 	private int addressid;
 	private int unaddressid;
+	private int customerid;
+	
+	public int getCustomerid() {
+		return customerid;
+	}
+	public void setCustomerid(int customerid) {
+		this.customerid = customerid;
+	}
 	
 	public int getCargoid() {
 		return cargoid;

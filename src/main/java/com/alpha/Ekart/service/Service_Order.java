@@ -16,6 +16,7 @@ import com.alpha.Ekart.dto.OrderDto;
 import com.alpha.Ekart.dto.ResponseStructure;
 import com.alpha.Ekart.entity.Address;
 import com.alpha.Ekart.entity.Cargo;
+import com.alpha.Ekart.entity.Customer;
 import com.alpha.Ekart.entity.Loading;
 import com.alpha.Ekart.entity.Order;
 import com.alpha.Ekart.entity.Truck;
@@ -26,6 +27,7 @@ import com.alpha.Ekart.exception.TruckCapacityExceededException;
 import com.alpha.Ekart.exception.TruckNotFoundException;
 import com.alpha.Ekart.respository.AddressResp;
 import com.alpha.Ekart.respository.CargoResp;
+import com.alpha.Ekart.respository.CustomerResp;
 import com.alpha.Ekart.respository.LoadingResp;
 import com.alpha.Ekart.respository.OrderResp;
 import com.alpha.Ekart.respository.TruckResp;
@@ -49,6 +51,9 @@ public class Service_Order {
 	@Autowired
 	private UnLoadingResp unloadresp;
 
+	@Autowired
+	private CustomerResp customerresp;
+
 	public ResponseEntity<ResponseStructure<Order>> saveOrder(OrderDto o) {
 
 		Order order = new Order();
@@ -63,6 +68,13 @@ public class Service_Order {
 
 		order.setCost(cost);
 		order.setCarrier(null);
+		order.setStatus("placedOrder");  // Set initial status to placedOrder (order just placed, pending for delivery)
+
+		// Set the customer
+		if (o.getCustomerid() > 0) {
+			Customer customer = customerresp.findById(o.getCustomerid()).orElse(null);
+			order.setCustomer(customer);
+		}
 
 		Cargo c = new Cargo();
 		c.setName(o.getCargoname());
@@ -92,7 +104,7 @@ public class Service_Order {
 		ResponseStructure<Order> rs = new ResponseStructure<Order>();
 
 		rs.setStatuscode(HttpStatus.CREATED.value());
-		rs.setMessage("Order Placed successfully");
+		rs.setMessage("Order Placed successfully - Pending for delivery");
 		rs.setData(order);
 
 		return new ResponseEntity<ResponseStructure<Order>>(rs, HttpStatus.OK);
@@ -126,16 +138,38 @@ public class Service_Order {
 			 throw new TruckCapacityExceededException();
 		 }		 
 		 
+		 order.setTruck(truck);  // Set the truck
 		 order.setCarrier(truck.getCarrier_id());
-		 order.setStatus("pendingOrder");
+		 order.setStatus("pendingDelivery");  // Status changed to pendingDelivery (truck and carrier assigned)
 		 oresp.save(order);
 		 	 
 		 ResponseStructure<Order> rs= new ResponseStructure<Order>();
 		 rs.setStatuscode(HttpStatus.OK.value());
-		 rs.setMessage("Order assigned successfully to carrier");
+		 rs.setMessage("Truck assigned successfully - Order status: Pending for Delivery");
 		 rs.setData(order);
 		 
 		 return new ResponseEntity<ResponseStructure<Order>>(rs,HttpStatus.OK);	 
+	}
+	
+	@Autowired
+	private com.alpha.Ekart.respository.CarrierResp carrierresp;
+	
+	public ResponseEntity<ResponseStructure<Order>> assignCarrierToOrder(int oid, int cid) {
+		Order order = oresp.findById(oid).orElseThrow(() -> new OrderNotFoundException());
+		
+		com.alpha.Ekart.entity.Carrier carrier = carrierresp.findById(cid).orElseThrow(() -> 
+			new RuntimeException("Carrier not found"));
+		
+		order.setCarrier(carrier);
+		order.setStatus("pendingDelivery");  // Status: Pending for Delivery (carrier confirmed)
+		oresp.save(order);
+		
+		ResponseStructure<Order> rs = new ResponseStructure<Order>();
+		rs.setStatuscode(HttpStatus.OK.value());
+		rs.setMessage("Carrier assigned successfully - Order status: Pending for Delivery");
+		rs.setData(order);
+		
+		return new ResponseEntity<ResponseStructure<Order>>(rs, HttpStatus.OK);
 	}
 	
 	@Autowired
@@ -145,7 +179,7 @@ public class Service_Order {
 		
 		Order order = oresp.findById(oid).orElseThrow(() -> new OrderNotFoundException());
 		
-		Loading load=lresp.findById(lid).orElseThrow(()-> new LoadingNotFoundException());
+		Loading templateLoading=lresp.findById(lid).orElseThrow(()-> new LoadingNotFoundException());
 		
 		LocalDate currentDate = LocalDate.now();
 	    LocalTime currentTime = LocalTime.now();
@@ -156,17 +190,42 @@ public class Service_Order {
 	    String dateStr = currentDate.format(dateFormatter);
 	    String timeStr = currentTime.format(timeFormatter);
 	    
-		load.setLdate(dateStr);
-		load.setLtime(timeStr);
+	    // Create NEW Loading record for this order (don't reuse the same one)
+	    Loading newLoad = new Loading();
+	    newLoad.setLdate(dateStr);
+	    newLoad.setLtime(timeStr);
+	    newLoad.setAddress_id(templateLoading.getAddress_id());
+	    
+	    Loading savedLoad = lresp.save(newLoad);
 		
-		lresp.save(load);
-		
+		// Update order status to shipped (loading date assigned, on the way)
+		order.setStatus("shipped");
+		order.setLoading(savedLoad);
 		oresp.save(order);
 		
 		ResponseStructure<Order> rs=new ResponseStructure<Order>();
 		
 		rs.setStatuscode(HttpStatus.OK.value());
-		rs.setMessage("Loading Date and Time updated");
+		rs.setMessage("Loading date updated - Order status: Shipped (On the way)");
+		rs.setData(order);
+		
+		return new ResponseEntity<ResponseStructure<Order>>(rs, HttpStatus.OK);
+		
+	}
+	
+	// Mark order as delivered when delivery date is reached
+	public ResponseEntity<ResponseStructure<Order>> completeOrder(int oid) {
+		
+		Order order = oresp.findById(oid).orElseThrow(() -> new OrderNotFoundException());
+		
+		// Update order status to delivered
+		order.setStatus("delivered");
+		oresp.save(order);
+		
+		ResponseStructure<Order> rs = new ResponseStructure<Order>();
+		
+		rs.setStatuscode(HttpStatus.OK.value());
+		rs.setMessage("Order marked as Delivered - Delivery completed");
 		rs.setData(order);
 		
 		return new ResponseEntity<ResponseStructure<Order>>(rs, HttpStatus.OK);
