@@ -1,7 +1,5 @@
 package com.alpha.Ekart.dto;
 
-import com.alpha.Ekart.entity.Loading;
-import com.alpha.Ekart.entity.UnLoading;
 
 public class OrderDto {
 	private int cargoid;
