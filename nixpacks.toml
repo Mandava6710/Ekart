@@ -1,0 +1,7 @@
+[build]
+# Explicitly specify Maven build
+cmd = ["mvn", "clean", "package", "-DskipTests", "-q", "-B"]
+
+[start]
+# Run the JAR file with proper configuration
+cmd = "java -Dspring.profiles.active=prod -Xmx512m -Xms256m -Dserver.port=$PORT -jar target/Ekart-0.0.1-SNAPSHOT.jar"
