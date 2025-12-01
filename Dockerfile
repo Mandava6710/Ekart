@@ -51,8 +51,10 @@ WORKDIR /app
 # Copy JAR from builder
 COPY --from=backend-builder /app/target/Ekart-0.0.1-SNAPSHOT.jar app.jar
 
-# Verify JAR exists
-RUN ls -lh app.jar
+# Verify JAR exists and is readable
+RUN ls -lh app.jar && \
+    jar tf app.jar BOOT-INF/lib/ | head -5 && \
+    echo "JAR is valid!"
 
 # Expose port
 EXPOSE 8080
@@ -62,6 +64,7 @@ ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
 
 # Run the app
+# Railway will use Procfile if it exists, but this is the fallback
 CMD ["java", "-Xmx512m", "-Xms256m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
 
 
