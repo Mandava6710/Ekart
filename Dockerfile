@@ -10,9 +10,11 @@ COPY frontend/package.json frontend/package-lock.json* ./frontend/
 WORKDIR /app/frontend
 RUN npm install
 
-# Copy frontend source
+# Copy frontend source and config files
 COPY frontend/src ./src
 COPY frontend/public ./public
+COPY frontend/.env ./
+COPY frontend/.env* ./
 
 # Build the React app
 RUN npm run build
