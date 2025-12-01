@@ -38,22 +38,27 @@ public class WebConfig implements WebMvcConfigurer {
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
                         // Don't process /api routes - let controllers handle them
                         if (resourcePath.startsWith("api/") || resourcePath.startsWith("/api/")) {
-                            return null;
-                        }
-                        
-                        // For empty path or root, serve index.html
-                        if (resourcePath.isEmpty() || resourcePath.equals("/")) {
+                            // Return index.html to let Spring handle the 404 gracefully
                             return new ClassPathResource("/static/frontend/build/index.html");
                         }
                         
-                        Resource requestedResource = location.createRelative(resourcePath);
-                        
-                        // If file exists, serve it
-                        if (requestedResource.exists() && requestedResource.isReadable()) {
-                            return requestedResource;
+                        // For empty path or root, serve index.html
+                        if (resourcePath.isEmpty() || resourcePath.equals("/") || resourcePath.equals("")) {
+                            return new ClassPathResource("/static/frontend/build/index.html");
                         }
                         
-                        // For SPA routing, serve index.html for unknown routes
+                        try {
+                            Resource requestedResource = location.createRelative(resourcePath);
+                            
+                            // If file exists, serve it
+                            if (requestedResource.exists() && requestedResource.isReadable()) {
+                                return requestedResource;
+                            }
+                        } catch (Exception e) {
+                            // Ignore any errors in resource lookup
+                        }
+                        
+                        // For SPA routing, serve index.html for unknown routes (allows React Router to handle)
                         return new ClassPathResource("/static/frontend/build/index.html");
                     }
                 });
