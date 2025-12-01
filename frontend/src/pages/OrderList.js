@@ -33,6 +33,7 @@ function OrderList() {
     if (user) {
       fetchAllData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const fetchAllData = async () => {
@@ -97,11 +98,17 @@ function OrderList() {
 
   const fetchLoadings = async () => {
     try {
-      const response = await fetch('http://localhost:8080/loadings');
+      const response = await fetch('http://localhost:8080/api/loadings');
       const data = await response.json();
-      const loadingList = data.data || [];
-      setLoadings(loadingList);
-      console.log('Loadings loaded:', loadingList);
+      let loadingList = data.data || [];
+      
+      // Remove duplicates by LID
+      const uniqueLoadings = loadingList.filter((loading, index, self) =>
+        index === self.findIndex((l) => l.lid === loading.lid)
+      );
+      
+      setLoadings(uniqueLoadings);
+      console.log('Loadings loaded (deduplicated):', uniqueLoadings);
     } catch (err) {
       console.error('Error fetching loadings:', err);
     }
@@ -345,11 +352,44 @@ function OrderList() {
                   <option value="">-- Choose a Loading --</option>
                   {loadings.map(load => (
                     <option key={load.lid} value={load.lid}>
-                      Loading ID: {load.lid}
+                      LID: {load.lid} - {load.address_id?.street}, {load.address_id?.city}, {load.address_id?.state} {load.address_id?.pincode}
                     </option>
                   ))}
                 </select>
               </div>
+              
+              {/* Show loading details when selected */}
+              {selectedLoading && loadings.find(l => String(l.lid) === String(selectedLoading)) && (
+                <div style={{
+                  backgroundColor: '#f0f8ff',
+                  border: '2px solid #4169e1',
+                  borderRadius: '4px',
+                  padding: '12px',
+                  marginTop: '10px',
+                  marginBottom: '10px',
+                  fontSize: '14px'
+                }}>
+                  {(() => {
+                    const selectedLoadingData = loadings.find(l => String(l.lid) === String(selectedLoading));
+                    return (
+                      <>
+                        <p style={{ margin: '0 0 8px 0', fontWeight: 'bold', color: '#4169e1' }}>
+                          Loading ID: {selectedLoadingData.lid}
+                        </p>
+                        <p style={{ margin: '0 0 4px 0' }}>
+                          {selectedLoadingData.address_id?.street}
+                        </p>
+                        <p style={{ margin: '0 0 4px 0' }}>
+                          {selectedLoadingData.address_id?.city}, {selectedLoadingData.address_id?.state} - {selectedLoadingData.address_id?.pincode}
+                        </p>
+                        <p style={{ margin: '0', fontSize: '12px', color: '#666' }}>
+                          Date: {selectedLoadingData.ldate} | Time: {selectedLoadingData.ltime}
+                        </p>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
 
               <div className="form-actions">
                 <button type="submit" className="btn btn-primary">Assign Loading</button>

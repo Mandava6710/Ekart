@@ -21,18 +21,39 @@ function OrderManagement() {
   const fetchAllData = async () => {
     try {
       setLoading(true);
+      console.log('Fetching all data...');
+      
       const ordersResponse = await orderAPI.getAll();
+      console.log('Orders Response:', ordersResponse.data);
+      
       const carriersResponse = await carrierAPI.getAll();
+      console.log('Carriers Response:', carriersResponse.data);
 
       setOrders(ordersResponse.data.data || []);
       setCarriers(carriersResponse.data.data || []);
       
       // Try to load loadings but don't fail if not available
       try {
+        console.log('Fetching loadings...');
         const loadingsResponse = await loadingAPI.getAll();
-        setLoadings(loadingsResponse.data.data || []);
+        console.log('Loadings Response Status:', loadingsResponse.status);
+        console.log('Loadings Response:', loadingsResponse.data);
+        let loadingsData = loadingsResponse.data.data || [];
+        
+        // Remove duplicates by LID
+        loadingsData = loadingsData.filter((loading, index, self) =>
+          index === self.findIndex((l) => l.lid === loading.lid)
+        );
+        
+        console.log('Loadings Data (deduplicated):', loadingsData);
+        console.log('Loadings Count:', loadingsData.length);
+        setLoadings(loadingsData);
       } catch (err) {
-        console.warn('Could not load loadings data:', err);
+        console.error('Error loading loadings - Full error:', err);
+        console.error('Error status:', err.response?.status);
+        console.error('Error message:', err.response?.data?.message);
+        console.error('Error config URL:', err.config?.url);
+        console.error('Error config baseURL:', err.config?.baseURL);
         setLoadings([]);
       }
       
@@ -54,7 +75,7 @@ function OrderManagement() {
     try {
       console.log('Assigning carrier:', assignCarrierId, 'to order:', selectedOrder.id);
       const response = await fetch(
-        `http://localhost:8080/orders/${selectedOrder.id}/assigncarrier/${parseInt(assignCarrierId)}`,
+        `http://localhost:8080/api/orders/${selectedOrder.id}/assigncarrier/${parseInt(assignCarrierId)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' }
@@ -87,7 +108,7 @@ function OrderManagement() {
     try {
       console.log('Assigning loading:', assignLoadingId, 'to order:', selectedOrder.id);
       const response = await fetch(
-        `http://localhost:8080/updateloading/${selectedOrder.id}/assigndate/${parseInt(assignLoadingId)}`,
+        `http://localhost:8080/api/updateloading/${selectedOrder.id}/assigndate/${parseInt(assignLoadingId)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' }
@@ -239,77 +260,72 @@ function OrderManagement() {
       {showLoadingModal && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <h3>Set Loading Date for Order #{selectedOrder?.id}</h3>
-            {selectedOrder?.loading?.id ? (
-              <>
-                <div className="info-message">
-                  <p><strong>Loading ID:</strong> {selectedOrder?.loading?.id}</p>
-                  <p><strong>Address:</strong> {selectedOrder?.loading?.address_id?.city}, {selectedOrder?.loading?.address_id?.state}</p>
-                  <p>Click "Set Loading" to update the loading date and time to today.</p>
-                </div>
-                <div className="modal-actions">
-                  <button
-                    className="btn btn-primary"
-                    onClick={async () => {
-                      try {
-                        console.log('Setting loading date for loading ID:', selectedOrder.loading.id);
-                        const response = await fetch(
-                          `http://localhost:8080/updateloading/${selectedOrder.id}/assigndate/${selectedOrder.loading.id}`,
-                          {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' }
-                          }
-                        );
-                        const data = await response.json();
-                        console.log('Response:', data);
-
-                        if (data.statuscode === 200) {
-                          alert('Loading date set successfully');
-                          setShowLoadingModal(false);
-                          setSelectedOrder(null);
-                          fetchAllData();
-                        } else {
-                          setError(data.message || 'Failed to set loading date');
-                        }
-                      } catch (err) {
-                        setError('Failed to set loading date');
-                        console.error('Error:', err);
-                      }
-                    }}
-                  >
-                    Set Loading Date Today
-                  </button>
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setShowLoadingModal(false);
-                      setAssignLoadingId('');
-                      setSelectedOrder(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className="info-message" style={{ backgroundColor: '#ffe7e7', borderLeftColor: '#dc3545' }}>
-                  <p>No loading information available for this order.</p>
-                </div>
-                <div className="modal-actions">
-                  <button
-                    className="btn btn-secondary"
-                    onClick={() => {
-                      setShowLoadingModal(false);
-                      setAssignLoadingId('');
-                      setSelectedOrder(null);
-                    }}
-                  >
-                    Close
-                  </button>
-                </div>
-              </>
+            <h3>Assign Loading to Order #{selectedOrder?.id}</h3>
+            <div className="form-group">
+              <label>Select Loading (by LID):</label>
+              <select
+                value={assignLoadingId}
+                onChange={(e) => setAssignLoadingId(e.target.value)}
+              >
+                <option value="">-- Choose a Loading --</option>
+                {loadings.map((loading) => (
+                  <option key={loading.lid} value={String(loading.lid)}>
+                    Loading #{loading.lid}
+                  </option>
+                ))}
+              </select>
+            </div>
+            
+            {/* Show loading details when selected */}
+            {assignLoadingId && loadings.find(l => String(l.lid) === assignLoadingId) && (
+              <div style={{
+                backgroundColor: '#f0f8ff',
+                border: '2px solid #4169e1',
+                borderRadius: '4px',
+                padding: '15px',
+                marginTop: '15px',
+                marginBottom: '15px'
+              }}>
+                {(() => {
+                  const selectedLoading = loadings.find(l => String(l.lid) === assignLoadingId);
+                  return (
+                    <>
+                      <p style={{ fontSize: '14px', margin: '0 0 10px 0' }}><strong>Selected Loading Details:</strong></p>
+                      <p style={{ fontSize: '16px', margin: '8px 0', fontWeight: 'bold', color: '#4169e1' }}>
+                        Loading ID: {selectedLoading.lid}
+                      </p>
+                      <p style={{ fontSize: '16px', margin: '8px 0', fontWeight: 'bold' }}>
+                        {selectedLoading.address_id?.street}<br/>
+                        {selectedLoading.address_id?.city}, {selectedLoading.address_id?.state} - {selectedLoading.address_id?.pincode}
+                      </p>
+                      <p style={{ fontSize: '12px', margin: '8px 0', color: '#666' }}>
+                        Date: {selectedLoading.ldate} | Time: {selectedLoading.ltime}
+                      </p>
+                    </>
+                  );
+                })()}
+              </div>
             )}
+            
+            <div className="modal-actions">
+              <button
+                className="btn btn-primary"
+                onClick={handleAssignLoading}
+                disabled={!assignLoadingId}
+              >
+                Assign Loading
+              </button>
+              <button
+                className="btn btn-secondary"
+                onClick={() => {
+                  setShowLoadingModal(false);
+                  setAssignLoadingId('');
+                  setSelectedOrder(null);
+                }}
+              >
+                Cancel
+              </button>
+            </div>
           </div>
         </div>
       )}

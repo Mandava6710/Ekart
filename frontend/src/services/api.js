@@ -4,14 +4,53 @@ import axios from 'axios';
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
   (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8080/api');
 
+console.log('=== API Configuration ===');
+console.log('API_BASE_URL:', API_BASE_URL);
+console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
+console.log('NODE_ENV:', process.env.NODE_ENV);
+console.log('REACT_APP_API_TIMEOUT:', process.env.REACT_APP_API_TIMEOUT);
+
 const api = axios.create({
   baseURL: API_BASE_URL,
-  timeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 30000,
+  timeout: parseInt(process.env.REACT_APP_API_TIMEOUT) || 10000, // Reduced to 10 seconds
   headers: {
     'Content-Type': 'application/json',
   },
   withCredentials: true,
 });
+
+// Add request interceptor for debugging
+api.interceptors.request.use(
+  config => {
+    console.log('API Request:', {
+      url: config.url,
+      baseURL: config.baseURL,
+      method: config.method,
+      timeout: config.timeout
+    });
+    return config;
+  },
+  error => Promise.reject(error)
+);
+
+// Add response interceptor for better error handling
+api.interceptors.response.use(
+  response => {
+    console.log('API Response:', response.status, response.config.url);
+    return response;
+  },
+  error => {
+    console.error('API Error:', {
+      message: error.message,
+      code: error.code,
+      hasResponse: !!error.response,
+      status: error.response?.status,
+      baseURL: error.config?.baseURL,
+      url: error.config?.url
+    });
+    return Promise.reject(error);
+  }
+);
 
 // Order API calls
 export const orderAPI = {

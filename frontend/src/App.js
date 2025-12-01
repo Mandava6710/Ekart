@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useNavigate } from 'react-router-dom';
 import './App.css';
+import './DebugEnv'; // Debug environment variables
 import PrivateRoute from './components/PrivateRoute';
 import Dashboard from './pages/Dashboard';
 import OrderList from './pages/OrderList';

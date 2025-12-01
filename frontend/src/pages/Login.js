@@ -58,12 +58,22 @@ const Login = () => {
       }
     } catch (err) {
       // Check if it's a network error or response error
+      console.error('Login error details:', {
+        message: err.message,
+        code: err.code,
+        hasResponse: !!err.response,
+        status: err.response?.status,
+        timeout: err.code === 'ECONNABORTED',
+      });
+
       if (err.response?.data?.message) {
         setError(err.response.data.message);
       } else if (err.response?.status === 401) {
         setError('Invalid email or password');
-      } else if (err.message === 'Network Error') {
-        setError('Cannot connect to server. Please check if backend is running.');
+      } else if (err.code === 'ECONNABORTED' || err.message === 'timeout of') {
+        setError('Request timeout. Please check if backend is running and responsive.');
+      } else if (!err.response) {
+        setError('Cannot connect to server. Please check if backend is running at http://localhost:8080');
       } else {
         setError('Login failed. Please try again.');
       }
