@@ -16,6 +16,11 @@ COPY frontend/public ./public
 COPY frontend/.env ./
 COPY frontend/.env* ./
 
+# Set environment variables for React build
+ENV REACT_APP_API_BASE_URL=/api
+ENV REACT_APP_API_TIMEOUT=10000
+ENV NODE_ENV=production
+
 # Build the React app
 RUN npm run build
 
