@@ -71,9 +71,15 @@ const Login = () => {
       } else if (err.response?.status === 401) {
         setError('Invalid email or password');
       } else if (err.code === 'ECONNABORTED' || err.message === 'timeout of') {
-        setError('Request timeout. Please check if backend is running and responsive.');
+        setError('Request timeout. Server is not responding.');
       } else if (!err.response) {
-        setError('Cannot connect to server. Please check if backend is running at http://localhost:8080');
+        // Network error - show more details
+        console.error('Network error - likely backend connection issue:', {
+          message: err.message,
+          code: err.code,
+          isNetworkError: err.message.includes('Network') || err.code === 'ERR_NETWORK'
+        });
+        setError('Cannot connect to backend. Please wait and try again.');
       } else {
         setError('Login failed. Please try again.');
       }
