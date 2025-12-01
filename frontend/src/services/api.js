@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-// Use /api for production (served from same domain) or localhost for development
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 
-  (process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:8080/api');
+// Use /api path for production (served from same domain/port as backend)
+// This works when frontend is embedded in Spring Boot JAR
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || '/api';
 
 console.log('=== API Configuration ===');
 console.log('API_BASE_URL:', API_BASE_URL);
