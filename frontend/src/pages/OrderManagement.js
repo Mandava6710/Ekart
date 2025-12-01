@@ -75,7 +75,7 @@ function OrderManagement() {
     try {
       console.log('Assigning carrier:', assignCarrierId, 'to order:', selectedOrder.id);
       const response = await fetch(
-        `http://localhost:8080/api/orders/${selectedOrder.id}/assigncarrier/${parseInt(assignCarrierId)}`,
+        `/api/orders/${selectedOrder.id}/assigncarrier/${parseInt(assignCarrierId)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' }
@@ -108,7 +108,7 @@ function OrderManagement() {
     try {
       console.log('Assigning loading:', assignLoadingId, 'to order:', selectedOrder.id);
       const response = await fetch(
-        `http://localhost:8080/api/updateloading/${selectedOrder.id}/assigndate/${parseInt(assignLoadingId)}`,
+        `/api/updateloading/${selectedOrder.id}/assigndate/${parseInt(assignLoadingId)}`,
         {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' }

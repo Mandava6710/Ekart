@@ -98,7 +98,7 @@ function OrderList() {
 
   const fetchLoadings = async () => {
     try {
-      const response = await fetch('http://localhost:8080/api/loadings');
+      const response = await fetch('/api/loadings');
       const data = await response.json();
       let loadingList = data.data || [];
       
