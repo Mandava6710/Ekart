@@ -14,6 +14,7 @@ import com.alpha.Ekart.respository.OrderResp;
 import com.alpha.Ekart.service.Service_Order;
 
 @RestController
+@org.springframework.web.bind.annotation.RequestMapping("/api")
 public class UserHandler {
 	
 	@Autowired

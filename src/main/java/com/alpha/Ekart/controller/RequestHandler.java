@@ -32,6 +32,7 @@ import com.alpha.Ekart.respository.AddressResp;
 import java.util.List;
 
 @RestController
+@org.springframework.web.bind.annotation.RequestMapping("/api")
 public class RequestHandler {
 
 	@Autowired

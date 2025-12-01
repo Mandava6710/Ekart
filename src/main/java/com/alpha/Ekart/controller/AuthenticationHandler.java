@@ -13,7 +13,7 @@ import com.alpha.Ekart.dto.UserResponseDto;
 import com.alpha.Ekart.service.Service_Authentication;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/auth")
 public class AuthenticationHandler {
 	
 	@Autowired
