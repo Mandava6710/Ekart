@@ -24,15 +24,24 @@ WORKDIR /app
 # Copy entire project
 COPY . .
 
+# Remove old frontend build if exists
+RUN rm -rf src/main/resources/static/frontend 2>/dev/null || true
+
 # Copy built frontend to Spring Boot's static files
-COPY --from=frontend-builder /app/frontend/build ./src/main/resources/static
+RUN mkdir -p src/main/resources/static/frontend
+COPY --from=frontend-builder /app/frontend/build src/main/resources/static/frontend
+
+# Verify frontend was copied
+RUN echo "=== Frontend Files ===" && \
+    ls -la src/main/resources/static/frontend/ && \
+    echo "=== Frontend Build Complete ===" 
 
 # Build backend with Maven
 RUN echo "=== Starting Maven Build ===" && \
-    mvn clean package -DskipTests -B 2>&1 | tail -50 && \
+    mvn clean package -DskipTests -B && \
     echo "" && \
     echo "=== Build Complete - Checking Target ===" && \
-    ls -lah target/ || echo "Target directory not found!"
+    ls -lah target/Ekart-0.0.1-SNAPSHOT.jar || echo "ERROR: JAR not found!"
 
 # Stage 3: Runtime
 FROM eclipse-temurin:21-jre-alpine
@@ -41,6 +50,9 @@ WORKDIR /app
 
 # Copy JAR from builder
 COPY --from=backend-builder /app/target/Ekart-0.0.1-SNAPSHOT.jar app.jar
+
+# Verify JAR exists
+RUN ls -lh app.jar
 
 # Expose port
 EXPOSE 8080
