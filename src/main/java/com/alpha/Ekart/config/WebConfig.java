@@ -29,14 +29,23 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/frontend/build/")
                 .setCachePeriod(31536000);
         
-        // Serve all other files, with index.html fallback for SPA routing
-        // This handler has lowest priority and only handles resources that don't match above
+        // Serve root index.html and SPA routes with fallback
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/frontend/build/")
                 .resourceChain(true)
                 .addResolver(new PathResourceResolver() {
                     @Override
                     protected Resource getResource(String resourcePath, Resource location) throws IOException {
+                        // Don't process /api routes - let controllers handle them
+                        if (resourcePath.startsWith("api/") || resourcePath.startsWith("/api/")) {
+                            return null;
+                        }
+                        
+                        // For empty path or root, serve index.html
+                        if (resourcePath.isEmpty() || resourcePath.equals("/")) {
+                            return new ClassPathResource("/static/frontend/build/index.html");
+                        }
+                        
                         Resource requestedResource = location.createRelative(resourcePath);
                         
                         // If file exists, serve it
@@ -45,12 +54,7 @@ public class WebConfig implements WebMvcConfigurer {
                         }
                         
                         // For SPA routing, serve index.html for unknown routes
-                        // But NOT for /api routes (let controllers handle those)
-                        if (!resourcePath.startsWith("api/")) {
-                            return new ClassPathResource("/static/frontend/build/index.html");
-                        }
-                        
-                        return null;
+                        return new ClassPathResource("/static/frontend/build/index.html");
                     }
                 });
     }
