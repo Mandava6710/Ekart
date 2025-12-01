@@ -137,4 +137,22 @@ public class GlobalExceptionHandler {
 	    return new ResponseEntity<ResponseStructure<String>>(rs,HttpStatus.NOT_FOUND);
 	}
 	
+	/**
+	 * Generic exception handler for all unhandled exceptions
+	 */
+	@ExceptionHandler(Exception.class)
+	public ResponseEntity<ResponseStructure<String>> handleGenericException(Exception e) {
+		e.printStackTrace(); // Log the stack trace
+		
+		ResponseStructure<String> rs = new ResponseStructure<String>();
+		rs.setStatuscode(HttpStatus.INTERNAL_SERVER_ERROR.value());
+		rs.setMessage("An unexpected error occurred: " + e.getMessage());
+		rs.setData(e.getClass().getSimpleName());
+		
+		System.err.println("Unexpected error: " + e.getMessage());
+		e.printStackTrace();
+		
+		return new ResponseEntity<ResponseStructure<String>>(rs, HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
 }
