@@ -34,10 +34,8 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
         // Forward unmapped requests to index.html for SPA routing
-        // This catches all paths that don't have actual files and aren't /api routes
         registry.addViewController("/").setViewName("forward:/index.html");
-        registry.addViewController("/{x:[\\w\\-]+}").setViewName("forward:/index.html");
-        registry.addViewController("/{x:^(?!api).*$}/**/{y:[\\w\\-]+}").setViewName("forward:/index.html");
+        registry.addViewController("/{path:[^.]*}").setViewName("forward:/index.html");
     }
 }
 
