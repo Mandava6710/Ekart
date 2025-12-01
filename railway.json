@@ -4,7 +4,9 @@
     "builder": "DOCKERFILE",
     "dockerfile": "./Dockerfile"
   },
-  "deploy": {}
+  "deploy": {
+    "startCommand": "java -Xmx512m -Xms256m -Dspring.profiles.active=prod -jar /app/app.jar"
+  }
 }
 
 

@@ -24,47 +24,47 @@ WORKDIR /app
 # Copy entire project
 COPY . .
 
-# Remove old frontend build if exists
-RUN rm -rf src/main/resources/static/frontend 2>/dev/null || true
-
 # Copy built frontend to Spring Boot's static files
-RUN mkdir -p src/main/resources/static/frontend
-COPY --from=frontend-builder /app/frontend/build src/main/resources/static/frontend
+RUN mkdir -p src/main/resources/static/frontend && \
+    cp -r /app/frontend/build/* src/main/resources/static/frontend/
 
-# Verify frontend was copied
-RUN echo "=== Frontend Files ===" && \
-    ls -la src/main/resources/static/frontend/ && \
-    echo "=== Frontend Build Complete ===" 
+# List what was copied
+RUN echo "=== Frontend files copied ===" && \
+    ls -la src/main/resources/static/frontend/
 
 # Build backend with Maven
-RUN echo "=== Starting Maven Build ===" && \
-    mvn clean package -DskipTests -B && \
-    echo "" && \
-    echo "=== Build Complete - Checking Target ===" && \
-    ls -lah target/Ekart-0.0.1-SNAPSHOT.jar || echo "ERROR: JAR not found!"
+RUN mvn clean package -DskipTests -B -q
+
+# Verify JAR was created
+RUN ls -lh target/Ekart-0.0.1-SNAPSHOT.jar
 
 # Stage 3: Runtime
 FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
-# Copy JAR from builder
-COPY --from=backend-builder /app/target/Ekart-0.0.1-SNAPSHOT.jar app.jar
+# Copy JAR from builder stage
+COPY --from=backend-builder /app/target/Ekart-0.0.1-SNAPSHOT.jar ./app.jar
 
-# Verify JAR exists and is readable
-RUN ls -lh app.jar && \
-    jar tf app.jar BOOT-INF/lib/ | head -5 && \
-    echo "JAR is valid!"
+# Verify JAR exists
+RUN ls -lh /app/app.jar
+
+# Create app directory structure
+RUN mkdir -p /app/logs
 
 # Expose port
 EXPOSE 8080
 
-# Set environment
+# Environment variables
 ENV PORT=8080
 ENV SPRING_PROFILES_ACTIVE=prod
+ENV JAVA_OPTS="-Xmx512m -Xms256m"
 
-# Run the app
-# Railway will use Procfile if it exists, but this is the fallback
-CMD ["java", "-Xmx512m", "-Xms256m", "-Dspring.profiles.active=prod", "-jar", "app.jar"]
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD java -cp /app/app.jar com.alpha.Ekart.EkartApplication || exit 1
+
+# Start the application
+ENTRYPOINT ["sh", "-c", "java -Xmx512m -Xms256m -Dserver.port=${PORT} -Dspring.profiles.active=prod -jar /app/app.jar"]
 
 
