@@ -2,12 +2,8 @@ package com.alpha.Ekart.config;
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-import org.springframework.web.servlet.resource.PathResourceResolver;
-import org.springframework.core.io.ClassPathResource;
-import org.springframework.core.io.Resource;
-
-import java.io.IOException;
 
 /**
  * Web configuration to serve React frontend build files
@@ -29,39 +25,19 @@ public class WebConfig implements WebMvcConfigurer {
                 .addResourceLocations("classpath:/static/frontend/build/")
                 .setCachePeriod(31536000);
         
-        // Serve root index.html and SPA routes with fallback
+        // Default servlet for all other resources (including index.html)
         registry.addResourceHandler("/**")
                 .addResourceLocations("classpath:/static/frontend/build/")
-                .resourceChain(true)
-                .addResolver(new PathResourceResolver() {
-                    @Override
-                    protected Resource getResource(String resourcePath, Resource location) throws IOException {
-                        // Don't process /api routes - let controllers handle them
-                        if (resourcePath.startsWith("api/") || resourcePath.startsWith("/api/")) {
-                            // Return index.html to let Spring handle the 404 gracefully
-                            return new ClassPathResource("/static/frontend/build/index.html");
-                        }
-                        
-                        // For empty path or root, serve index.html
-                        if (resourcePath.isEmpty() || resourcePath.equals("/") || resourcePath.equals("")) {
-                            return new ClassPathResource("/static/frontend/build/index.html");
-                        }
-                        
-                        try {
-                            Resource requestedResource = location.createRelative(resourcePath);
-                            
-                            // If file exists, serve it
-                            if (requestedResource.exists() && requestedResource.isReadable()) {
-                                return requestedResource;
-                            }
-                        } catch (Exception e) {
-                            // Ignore any errors in resource lookup
-                        }
-                        
-                        // For SPA routing, serve index.html for unknown routes (allows React Router to handle)
-                        return new ClassPathResource("/static/frontend/build/index.html");
-                    }
-                });
+                .setCachePeriod(31536000);
+    }
+
+    @Override
+    public void addViewControllers(ViewControllerRegistry registry) {
+        // Forward unmapped requests to index.html for SPA routing
+        // This catches all paths that don't have actual files and aren't /api routes
+        registry.addViewController("/").setViewName("forward:/index.html");
+        registry.addViewController("/{x:[\\w\\-]+}").setViewName("forward:/index.html");
+        registry.addViewController("/{x:^(?!api).*$}/**/{y:[\\w\\-]+}").setViewName("forward:/index.html");
     }
 }
 
