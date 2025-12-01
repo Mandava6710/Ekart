@@ -21,18 +21,18 @@ public class WebConfig implements WebMvcConfigurer {
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
         // Serve static frontend build files (CSS, JS, images, etc.)
         registry.addResourceHandler("/static/**")
-                .addResourceLocations("classpath:/static/frontend/static/")
+                .addResourceLocations("classpath:/static/frontend/build/static/")
                 .setCachePeriod(31536000) // 1 year
                 .resourceChain(true);
         
         // Serve public assets
         registry.addResourceHandler("/favicon.ico", "/manifest.json")
-                .addResourceLocations("classpath:/static/frontend/")
+                .addResourceLocations("classpath:/static/frontend/build/")
                 .setCachePeriod(31536000); // 1 year
         
         // Serve all files, with index.html fallback for SPA routing
         registry.addResourceHandler("/**")
-                .addResourceLocations("classpath:/static/frontend/")
+                .addResourceLocations("classpath:/static/frontend/build/")
                 .resourceChain(true)
                 .addResolver(new PathResourceResolver() {
                     @Override
@@ -45,7 +45,7 @@ public class WebConfig implements WebMvcConfigurer {
                         }
                         
                         // For SPA routing, serve index.html for unknown routes
-                        return new ClassPathResource("/static/frontend/index.html");
+                        return new ClassPathResource("/static/frontend/build/index.html");
                     }
                 });
     }
